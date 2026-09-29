@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en" id="top">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REMNest — Sleep Cycle Calculator | Perfect Bedtimes & Wake Times</title>
+<meta name="description" content="REMNest is a free sleep cycle calculator that plans bedtimes and wake times around complete sleep cycles. Adjust cycle length and fall-asleep time, explore 3–6 cycle options, plan power naps, and see age-based sleep needs.">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root { color-scheme: dark; }
+  html { scroll-behavior: smooth; }
+  body { background:#171233; color:#E7E4F7; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .periwinkle { color:#A5B4FC; }
+  .amber-glow { color:#FCD34D; }
+  .night-card { background: linear-gradient(160deg, #221B4A 0%, #1B1540 60%, #18123A 100%); border:1px solid rgba(165,180,252,.18); box-shadow: 0 18px 45px -18px rgba(8,6,28,.85), inset 0 1px 0 rgba(165,180,252,.10); }
+  .night-card-hover:hover { border-color: rgba(252,211,77,.45); transform: translateY(-3px); transition: all .25s ease; }
+  .tab-active { background:#FCD34D; color:#171233; }
+  .tab-idle { background: rgba(165,180,252,.10); color:#C9C3EC; border:1px solid rgba(165,180,252,.25); }
+  .tab-idle:hover { background: rgba(165,180,252,.18); }
+  input[type=range] { -webkit-appearance:none; appearance:none; height:6px; border-radius:9999px; background: linear-gradient(90deg,#A5B4FC,#6366F1); outline:none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:20px; height:20px; border-radius:50%; background:#FCD34D; border:3px solid #171233; box-shadow:0 0 0 2px #FCD34D, 0 0 14px rgba(252,211,77,.8); cursor:pointer; }
+  input[type=range]::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:#FCD34D; border:3px solid #171233; box-shadow:0 0 0 2px #FCD34D, 0 0 14px rgba(252,211,77,.8); cursor:pointer; }
+  input[type=time], input[type=number] { color-scheme: dark; }
+  @keyframes twinkle { 0%,100% { opacity:.15; transform:scale(.8);} 50% { opacity:.95; transform:scale(1.15);} }
+  @keyframes drift { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-12px);} }
+  .star { position:absolute; border-radius:50%; background:#fff; animation: twinkle 3s ease-in-out infinite; }
+  .moon-float { animation: drift 7s ease-in-out infinite; }
+  @keyframes slideIn { from { opacity:0; transform: translateY(14px);} to { opacity:1; transform: translateY(0);} }
+  .result-in { animation: slideIn .35s ease both; }
+  .cycle-seg { height:100%; }
+  ::selection { background:#FCD34D; color:#171233; }
+  .no-print { }
+  @media print { .no-print { display:none !important; } }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ============ HEADER ============ -->
+<header class="sticky top-0 z-50 backdrop-blur-md border-b border-indigo-300/15" style="background:rgba(23,18,51,.88)">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2.5" aria-label="REMNest home">
+      <svg width="34" height="34" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M32.5 29.5A15 15 0 1 1 18.5 6.6 12.2 12.2 0 0 0 32.5 29.5Z" fill="#FCD34D"/>
+        <circle cx="36" cy="14" r="2.2" fill="#A5B4FC"/>
+        <circle cx="41" cy="26" r="1.4" fill="#A5B4FC" opacity=".7"/>
+        <circle cx="30" cy="8" r="1.1" fill="#fff" opacity=".9"/>
+      </svg>
+      <span class="text-2xl font-extrabold tracking-tight"><span class="periwinkle">REM</span><span class="amber-glow">Nest</span></span>
+    </a>
+    <nav class="flex items-center gap-5 sm:gap-8 text-sm font-semibold">
+      <a href="#top" class="text-slate-200 hover:text-amber-300 transition">Home</a>
+      <a href="https://fixoraa.tech" class="text-slate-200 hover:text-amber-300 transition">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ TOP AD ============ -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+<!-- ============ HERO ============ -->
+<section class="relative overflow-hidden">
+  <div id="starfield" class="absolute inset-0 pointer-events-none" aria-hidden="true"></div>
+  <div class="moon-float absolute right-6 sm:right-16 top-6 sm:top-10 pointer-events-none" aria-hidden="true">
+    <svg width="92" height="92" viewBox="0 0 48 48" fill="none" class="drop-shadow-[0_0_25px_rgba(252,211,77,.45)]">
+      <path d="M32.5 29.5A15 15 0 1 1 18.5 6.6 12.2 12.2 0 0 0 32.5 29.5Z" fill="#FCD34D"/>
+    </svg>
+  </div>
+  <div class="relative mx-auto max-w-6xl px-4 sm:px-6 pt-12 sm:pt-16 pb-8 text-center">
+    <span class="inline-flex items-center gap-2 rounded-full border border-indigo-300/30 bg-indigo-300/10 px-4 py-1.5 text-xs font-bold tracking-wide text-indigo-200">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2l2.6 6.2 6.7.5-5.1 4.4 1.6 6.5L12 15.9 6.2 19.6l1.6-6.5L2.7 8.7l6.7-.5L12 2z" fill="#FCD34D"/></svg>
+      UNLIMITED FREE USAGE · NO SIGNUP · NO PAYWALL
+    </span>
+    <h1 class="mt-5 text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight">
+      Wake up <span class="amber-glow">refreshed</span>,<br class="hidden sm:block"> not <span class="periwinkle">groggy</span>.
+    </h1>
+    <p class="mt-4 max-w-2xl mx-auto text-slate-300 text-base sm:text-lg leading-relaxed">
+      REMNest times your sleep around complete <strong class="text-white">90-minute sleep cycles</strong> — with your own cycle length and fall-asleep time. Wake at the light end of a cycle and skip the morning fog.
+    </p>
+  </div>
+</section>
+
+<!-- ============ TOOL ============ -->
+<section id="calculator" class="mx-auto max-w-6xl px-4 sm:px-6 pb-10">
+  <div class="night-card rounded-3xl p-5 sm:p-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <h2 class="text-2xl sm:text-3xl font-extrabold">Sleep Cycle Calculator</h2>
+      <p class="text-xs text-slate-400">100% client-side · your settings stay in this browser</p>
+    </div>
+
+    <!-- Mode tabs -->
+    <div class="mt-6 grid grid-cols-2 gap-3" role="tablist" aria-label="Calculator mode">
+      <button id="tabWake" role="tab" aria-selected="true" class="tab-active rounded-2xl px-4 py-3.5 font-bold text-sm sm:text-base transition">🌅 I want to wake at…</button>
+      <button id="tabBed" role="tab" aria-selected="false" class="tab-idle rounded-2xl px-4 py-3.5 font-bold text-sm sm:text-base transition">🌙 I'm going to bed at…</button>
+    </div>
+
+    <!-- Time input -->
+    <div class="mt-5 grid sm:grid-cols-2 gap-4">
+      <div>
+        <label for="timeInput" id="timeLabel" class="block text-sm font-semibold text-indigo-200 mb-2">Wake-up time</label>
+        <input id="timeInput" type="time" class="w-full rounded-xl bg-[#171233] border border-indigo-300/25 px-4 py-3 text-xl font-bold text-white focus:outline-none focus:ring-2 focus:ring-amber-300/70" aria-describedby="timeHint">
+        <p id="timeHint" class="mt-1.5 text-xs text-slate-400">Tip: tap "Now" to use the current time.</p>
+        <p id="timeError" class="mt-1.5 text-xs font-semibold text-rose-300 hidden" role="alert"></p>
+      </div>
+      <div class="flex items-end gap-3">
+        <button id="btnNow" class="rounded-xl border border-indigo-300/25 bg-indigo-300/10 px-5 py-3 font-bold text-indigo-100 hover:bg-indigo-300/20 transition">Use current time</button>
+        <button id="btnClear" class="rounded-xl border border-indigo-300/25 bg-indigo-300/10 px-5 py-3 font-bold text-indigo-100 hover:bg-indigo-300/20 transition">Clear</button>
+      </div>
+    </div>
+
+    <!-- Sliders -->
+    <div class="mt-6 grid sm:grid-cols-2 gap-6">
+      <div class="rounded-2xl border border-indigo-300/15 bg-[#171233]/60 p-4">
+        <div class="flex items-center justify-between mb-2">
+          <label for="cycleLen" class="text-sm font-bold text-indigo-100">My sleep-cycle length</label>
+          <span class="text-sm font-extrabold amber-glow"><span id="cycleLenVal">90</span> min</span>
+        </div>
+        <input id="cycleLen" type="range" min="80" max="100" step="1" value="90" class="w-full" aria-valuetext="90 minutes">
+        <p class="mt-2 text-xs text-slate-400">Cycles vary 80–100 min person to person. Start at 90 and nudge it after a few nights of testing.</p>
+      </div>
+      <div class="rounded-2xl border border-indigo-300/15 bg-[#171233]/60 p-4">
+        <div class="flex items-center justify-between mb-2">
+          <label for="latency" class="text-sm font-bold text-indigo-100">Time to fall asleep</label>
+          <span class="text-sm font-extrabold amber-glow"><span id="latencyVal">15</span> min</span>
+        </div>
+        <input id="latency" type="range" min="0" max="60" step="1" value="15" class="w-full" aria-valuetext="15 minutes">
+        <p class="mt-2 text-xs text-slate-400">How long you usually lie awake after lights-out. The average adult takes about 15 minutes.</p>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="mt-8">
+      <h3 id="resultsTitle" class="text-lg font-extrabold">Suggested bedtimes</h3>
+      <p id="resultsEmpty" class="mt-2 text-sm text-slate-400">Enter a time above to see your cycle-aligned plan.</p>
+      <div id="results" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    </div>
+
+    <!-- Countdown chip -->
+    <div id="countdownWrap" class="mt-6 hidden">
+      <div class="inline-flex items-center gap-3 rounded-2xl border border-amber-300/40 bg-amber-300/10 px-5 py-3">
+        <span class="text-2xl" aria-hidden="true">⏳</span>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-amber-200/80" id="countdownLabel">Bedtime in</p>
+          <p class="text-xl font-extrabold amber-glow" id="countdownText">—</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NAP + AGE ============ -->
+<section class="mx-auto max-w-6xl px-4 sm:px-6 pb-10 grid gap-6 lg:grid-cols-2">
+
+  <!-- Nap planner -->
+  <div class="night-card rounded-3xl p-5 sm:p-7">
+    <div class="flex items-center gap-3">
+      <span class="text-3xl" aria-hidden="true">💤</span>
+      <div>
+        <h2 class="text-xl sm:text-2xl font-extrabold">Nap Planner</h2>
+        <p class="text-xs text-slate-400">Plan a nap starting right now.</p>
+      </div>
+    </div>
+    <div class="mt-5 grid grid-cols-2 gap-3">
+      <button id="btnPowerNap" class="rounded-2xl border border-indigo-300/25 bg-indigo-300/10 px-4 py-4 font-bold hover:bg-indigo-300/20 transition text-left">
+        <span class="block text-lg">⚡ Power nap</span>
+        <span class="block text-xs font-normal text-slate-400 mt-1">20 min · wake before deep sleep</span>
+      </button>
+      <button id="btnFullNap" class="rounded-2xl border border-amber-300/40 bg-amber-300/10 px-4 py-4 font-bold hover:bg-amber-300/20 transition text-left">
+        <span class="block text-lg">🌙 Full-cycle nap</span>
+        <span class="block text-xs font-normal text-slate-400 mt-1" id="fullNapDesc">1 cycle · your settings</span>
+      </button>
+    </div>
+    <div id="napResult" class="mt-4 hidden rounded-2xl bg-[#171233]/70 border border-indigo-300/20 p-4">
+      <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold" id="napKind">Nap</p>
+      <p class="text-3xl font-extrabold amber-glow mt-1" id="napTime">—</p>
+      <p class="text-sm text-slate-300 mt-1" id="napNote"></p>
+    </div>
+    <p class="mt-4 text-xs text-slate-400 leading-relaxed">A 20-minute nap stays in light sleep, so you wake easily. A full-cycle nap completes one whole cycle (your fall-asleep time + one cycle length) — best when you have 90–110 minutes.</p>
+  </div>
+
+  <!-- Age groups -->
+  <div class="night-card rounded-3xl p-5 sm:p-7">
+    <div class="flex items-center gap-3">
+      <span class="text-3xl" aria-hidden="true">👪</span>
+      <div>
+        <h2 class="text-xl sm:text-2xl font-extrabold">Sleep Needs by Age</h2>
+        <p class="text-xs text-slate-400">Recommended nightly sleep (National Sleep Foundation ranges).</p>
+      </div>
+    </div>
+    <div class="mt-4 flex items-center gap-3">
+      <label for="ageInput" class="text-sm font-bold text-indigo-100">Your age (years)</label>
+      <input id="ageInput" type="number" min="0" max="120" placeholder="e.g. 30" class="w-32 rounded-xl bg-[#171233] border border-indigo-300/25 px-3 py-2 font-bold text-white focus:outline-none focus:ring-2 focus:ring-amber-300/70">
+    </div>
+    <p id="ageNote" class="mt-2 text-sm font-semibold amber-glow hidden"></p>
+    <div class="mt-3 overflow-x-auto rounded-2xl border border-indigo-300/15">
+      <table class="w-full text-sm" id="ageTable">
+        <thead>
+          <tr class="text-left text-xs uppercase tracking-wider text-indigo-200/70">
+            <th class="px-4 py-3">Age group</th>
+            <th class="px-4 py-3 text-right">Recommended</th>
+          </tr>
+        </thead>
+        <tbody id="ageBody" class="divide-y divide-indigo-300/10"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+</main>
+<!-- ============ BOTTOM AD ============ -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="464498"></script>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SEO ARTICLE ============ -->
+<section class="mx-auto max-w-6xl px-4 sm:px-6 pb-12">
+<article class="night-card rounded-3xl p-5 sm:p-10 prose-styles">
+<h2 class="text-2xl sm:text-3xl font-extrabold mb-4">The Complete Guide to Sleep Cycles, REM Sleep, and Waking Up Refreshed</h2>
+
+<p class="text-slate-300 leading-relaxed mb-4">You set your alarm for 6:30 AM, sleep a solid eight hours, and still drag yourself out of bed feeling like you barely slept. A friend sleeps six hours and bounds up full of energy. The difference usually is not the number of hours — it is where your alarm lands inside your sleep cycles. Your brain does not sleep in one flat block. It moves through repeating cycles of light sleep, deep sleep, and REM sleep, each lasting roughly 90 minutes. Wake up at the end of a cycle, during light sleep, and you surface easily. Wake up in the middle of deep sleep, and you get sleep inertia — that heavy, disoriented grogginess that coffee barely touches. A sleep cycle calculator exists to solve exactly this timing problem: instead of guessing a bedtime, you work backward or forward in complete cycles so your alarm always lands at a natural wake point.</p>
+
+<h3 class="text-xl font-extrabold mt-8 mb-3 periwinkle">What actually happens during one 90-minute sleep cycle</h3>
+<p class="text-slate-300 leading-relaxed mb-4">Each cycle is a journey through four stages. Stage 1 is the drowsy drift-off that lasts only a few minutes — you are half awake and easily startled. Stage 2 is light sleep: your heart rate slows, body temperature drops, and your brain produces quick bursts of activity called sleep spindles that help lock in what you learned that day. Stage 3 is deep sleep (slow-wave sleep): growth hormone is released, tissues are repaired, the immune system recharges, and memories are consolidated. Then comes REM — rapid eye movement sleep — when most vivid dreaming happens, emotions are processed, and the brain rehearses skills. Early in the night, cycles are deep-sleep heavy; toward morning, REM stretches longer. That is why the last two hours of sleep often contain the most dreaming. The often-quoted 90 minutes is an average: laboratory measurements place real cycles anywhere from about 80 to 110 minutes depending on age, genetics, and sleep pressure, and the first cycle of the night tends to run slightly longer than the last. This is exactly why REMNest lets you adjust cycle length between 80 and 100 minutes instead of locking you to a fixed 90 — the single biggest flaw of most online calculators.</p>
+
+<h3 class="text-xl font-extrabold mt-8 mb-3 periwinkle">Why "just get 8 hours" is incomplete advice</h3>
+<p class="text-slate-300 leading-relaxed mb-4">Eight hours is a reasonable target, but it says nothing about timing. Two people can both sleep exactly eight hours and feel completely different in the morning depending on where the alarm falls relative to their cycle boundaries. Five complete 90-minute cycles equal 7.5 hours of actual sleep, plus roughly 15 minutes to drift off, which lands you at 7 hours 45 minutes in bed — a timing that routinely beats a sloppy 8 hours that cuts a cycle off mid-way. Sleep scientists have shown repeatedly that waking from deep slow-wave sleep produces the worst sleep inertia, sometimes lasting 30 minutes or more, while waking from light sleep or REM produces almost none. So the two levers that matter are duration (enough total cycles) and phase (ending at a cycle boundary). The calculator handles phase for you; your job is to pick enough cycles — five or six for most adults.</p>
+
+<h3 class="text-xl font-extrabold mt-8 mb-3 periwinkle">How the math works: working backward from your alarm</h3>
+<p class="text-slate-300 leading-relaxed mb-4">The calculation is simple arithmetic once your two personal settings are known. Suppose you must wake at 6:30 AM, your cycles run 90 minutes, and you take 15 minutes to fall asleep. For five cycles: 6:30 minus (5 × 90 minutes) minus 15 minutes of latency equals 10:45 PM lights-out. For six cycles it is 9:15 PM; for four cycles, 12:15 AM. Each option lands your alarm at the end of a complete cycle. Going the other direction is the same math in reverse: if you climb into bed at 11:00 PM with the same settings, complete-cycle wake times fall at 5:30 AM (four cycles), 7:00 AM (five), and 8:30 AM (six). Notice that 6:30 AM from an 11:00 PM bedtime is a trap — it cuts the fifth cycle in half, which is exactly the kind of mid-cycle alarm the calculator helps you avoid. Times wrap naturally past midnight, so night owls with 2:00 AM bedtimes get correct early-morning suggestions too.</p>
+
+<h3 class="text-xl font-extrabold mt-8 mb-3 periwinkle">Why your cycle length and fall-asleep time are adjustable (and should be)</h3>
+<p class="text-slate-300 leading-relaxed mb-4">Fixed-90 calculators assume you are the statistical average. Most people are not. Your personal cycle length drifts with age — teenagers and young adults often run slightly shorter cycles, while older adults get more fragmented sleep with more awakenings between cycles. Caffeine, alcohol, exercise timing, stress, and even bedroom temperature all nudge it. Your fall-asleep latency matters just as much: the often-cited 15-minute average is only an average. If you are the kind of person who reads for 40 minutes before drifting off, every fixed calculator will hand you bedtimes that are systematically 25 minutes too late. REMNest's two sliders exist for this reason. A practical way to calibrate: set cycle length to 90 and latency to your honest estimate, follow the plan for a week, and note whether you wake naturally just before the alarm or feel pulled out of deep sleep. Waking consistently early means your cycles run short — drop the setting by 5 minutes. Consistently groggy means they run long. Small experiments beat generic averages.</p>
+
+<h3 class="text-xl font-extrabold mt-8 mb-3 periwinkle">The nap science: 20 minutes or one full cycle, nothing between</h3>
+<p class="text-slate-300 leading-relaxed mb-4">Naps obey the same cycle logic, and the research is remarkably consistent. A 20-minute nap keeps you in light sleep, which is why you can wake from it quickly and feel alert within minutes — it is the classic power nap, and even NASA studies on pilots have found 26-minute naps measurably improve performance. The danger zone is 30 to 60 minutes: long enough to sink into deep slow-wave sleep, too short to complete a cycle, so you wake disoriented and sometimes feel worse than before. The only long nap worth taking is a full cycle — your latency plus one full cycle length, usually 90 to 110 minutes — which lets you pass through deep sleep and REM and wake at a natural boundary. REMNest's nap planner offers exactly these two options from the current time: a 20-minute power nap, or a full-cycle nap built from your personal settings. Set the alarm the moment you lie down, not the moment you fall asleep, because your latency is already included in the full-cycle option.</p>
+
+<h3 class="text-xl font-extrabold mt-8 mb-3 periwinkle">Sleep needs change across your life: the age table explained</h3>
+<p class="text-slate-300 leading-relaxed mb-4">A newborn and a retiree do not need the same sleep, and the calculator's age table reflects the consensus ranges published by the National Sleep Foundation. Newborns (0–3 months) need 14–17 hours — nearly the whole day in short bursts, because their cycles are only about 50 minutes long. Infants (4–12 months) need 12–16 hours; toddlers (1–2 years) 11–14; preschoolers (3–5 years) 10–13. School-age children (6–12 years) need 9–12 hours for growth and learning, teenagers (13–17 years) need 8–10 even though school schedules fight them on it, adults (18–64 years) need 7–9, and older adults (65+) need 7–8, often with earlier bedtimes as circadian rhythms shift forward. Enter your age and REMNest highlights your row and converts the hour range into a cycle count using your personal cycle length, so a teenager with 85-minute cycles sees a different target than an adult with 95-minute ones. Children and teens should treat this as guidance for family routines, not medical advice — persistent sleep problems at any age deserve a conversation with a clinician.</p>
+
+<h3 class="text-xl font-extrabold mt-8 mb-3 periwinkle">Sleep hygiene: the habits that make the math actually work</h3>
+<p class="text-slate-300 leading-relaxed mb-4">Perfect cycle timing cannot rescue bad sleep hygiene, so treat the calculator as one half of the system. Keep a consistent wake time — even on weekends, within about 30 minutes — because your circadian rhythm anchors to the morning, not the evening. Get bright light within an hour of waking; it is the strongest signal that sets your internal clock. Cut caffeine after early afternoon (its half-life is five to six hours), and skip alcohol near bedtime: it may make you drowsy, but it fragments sleep architecture and suppresses REM in the first half of the night. Keep the bedroom cool (around 18–20°C), dark, and quiet; your core body temperature must drop to initiate deep sleep, and light exposure suppresses melatonin. Put screens away 30–60 minutes before bed or at least dim them — and consider a wind-down routine of reading, stretching, or a warm shower, which paradoxically helps by triggering the post-shower temperature drop. Regular daytime exercise improves deep sleep, but finish vigorous workouts at least a few hours before bed. None of these require buying anything; they are the free, unglamorous foundations that let cycle timing do its job.</p>
+
+<h3 class="text-xl font-extrabold mt-8 mb-3 periwinkle">Putting it together: a sample week with REMNest</h3>
+<p class="text-slate-300 leading-relaxed mb-4">Here is how a typical office worker might use the tool. Sunday evening, they enter a 7:00 AM wake time with 90-minute cycles and 20 minutes of latency, and pick the five-cycle bedtime of 10:55 PM. They set a phone reminder for 10:40 PM to start winding down, so latency is honest rather than aspirational. Midweek they have a late meeting and use "I'm going to bed at…" with 12:30 AM: the tool offers 6:35 AM (four cycles) or 8:05 AM (five). They take the 6:35 option, accept it is a short night, and plan a 20-minute power nap at 2:00 PM the next day using the nap planner. On Saturday they sleep in: bedtime 1:00 AM, wake 9:05 AM for five full cycles, keeping the weekend shift under an hour so Monday does not hurt. The countdown chip tells them each evening exactly how long until lights-out, which turns "I should go to bed soon" into a concrete number. After two weeks they notice they wake naturally a few minutes before every alarm — their cycles might be slightly short, so they nudge the slider to 85 and everything tightens up further. That feedback loop — plan, observe, adjust — is the whole philosophy: the calculator gives you a personalized starting point, and your own mornings refine it.</p>
+
+<p class="text-slate-400 text-sm leading-relaxed mt-8 border-t border-indigo-300/15 pt-6"><em>Disclaimer:</em> REMNest is a planning tool based on widely used sleep-science averages. It cannot measure your actual sleep stages, and it is not medical advice. If you snore heavily, stop breathing during sleep, or feel exhausted despite adequate time in bed, talk to a healthcare professional — those can be signs of sleep apnea or other treatable conditions.</p>
+</article>
+
+<!-- ============ FAQs ============ -->
+<div class="mt-8 night-card rounded-3xl p-5 sm:p-10">
+  <h2 class="text-2xl sm:text-3xl font-extrabold mb-6">Frequently Asked Questions</h2>
+  <div class="space-y-5 text-slate-300">
+    <div class="rounded-2xl border border-indigo-300/15 bg-[#171233]/60 p-4 sm:p-5">
+      <h3 class="font-extrabold text-white text-base sm:text-lg">How long is one sleep cycle?</h3>
+      <p class="mt-2 text-sm sm:text-base leading-relaxed">For planning purposes, 90 minutes is the standard average: each cycle moves through light sleep, deep sleep, and REM sleep. In reality, cycles range from about 80 to 110 minutes depending on age, genetics, and sleep pressure, and they shorten slightly toward morning. That is why REMNest lets you adjust cycle length between 80 and 100 minutes instead of forcing a fixed 90.</p>
+    </div>
+    <div class="rounded-2xl border border-indigo-300/15 bg-[#171233]/60 p-4 sm:p-5">
+      <h3 class="font-extrabold text-white text-base sm:text-lg">Why does the calculator add time to fall asleep?</h3>
+      <p class="mt-2 text-sm sm:text-base leading-relaxed">The time between lights-out and actual sleep — sleep latency — averages about 15 minutes for healthy adults, but varies enormously between people. If the calculator ignored it, every suggested bedtime would be too late by your personal latency, and you would complete fewer cycles than planned. Set the slider to your honest estimate; if you read in bed for half an hour, use 30, not 15.</p>
+    </div>
+    <div class="rounded-2xl border border-indigo-300/15 bg-[#171233]/60 p-4 sm:p-5">
+      <h3 class="font-extrabold text-white text-base sm:text-lg">Is 6 hours of sleep enough if it is complete cycles?</h3>
+      <p class="mt-2 text-sm sm:text-base leading-relaxed">Four complete cycles (6 hours at 90 minutes each) will feel much better than 7 hours that ends mid-cycle, because you avoid waking from deep sleep. But it is still a short night: most adults need 7–9 hours, i.e. five to six cycles, and consistently sleeping 6 hours builds sleep debt linked to poorer focus, mood, and long-term health. Use the 4-cycle option for occasional short nights, not as a lifestyle.</p>
+    </div>
+    <div class="rounded-2xl border border-indigo-300/15 bg-[#171233]/60 p-4 sm:p-5">
+      <h3 class="font-extrabold text-white text-base sm:text-lg">What is the best nap length?</h3>
+      <p class="mt-2 text-sm sm:text-base leading-relaxed">Either 20 minutes or one full sleep cycle (roughly 90–110 minutes including your fall-asleep time) — nothing in between. A 20-minute power nap keeps you in light sleep so you wake easily. A 30–60 minute nap drops you into deep sleep without completing the cycle, causing grogginess. A full-cycle nap lets you pass through deep sleep and REM and wake at a natural boundary.</p>
+    </div>
+    <div class="rounded-2xl border border-indigo-300/15 bg-[#171233]/60 p-4 sm:p-5">
+      <h3 class="font-extrabold text-white text-base sm:text-lg">Why do I feel groggy even after 8 hours of sleep?</h3>
+      <p class="mt-2 text-sm sm:text-base leading-relaxed">Usually because your alarm fired during deep slow-wave sleep — the middle of a cycle. Eight hours is five full 90-minute cycles plus 30 minutes, which lands you squarely inside the sixth cycle's deep phase. Try 7.5 or 9 hours instead (five or six complete cycles plus your fall-asleep time), or use the calculator to find the exact bedtime that puts your alarm at a cycle boundary.</p>
+    </div>
+    <div class="rounded-2xl border border-indigo-300/15 bg-[#171233]/60 p-4 sm:p-5">
+      <h3 class="font-extrabold text-white text-base sm:text-lg">Can I use this for shift work or daytime sleep?</h3>
+      <p class="mt-2 text-sm sm:text-base leading-relaxed">Yes — the math works identically for any 24-hour time, since all calculations wrap past midnight. Enter your daytime wake time and the calculator counts back through complete cycles to a nighttime bedtime, or vice versa. For rotating shifts, keep the cycle-length and latency settings consistent and aim for the same number of cycles each sleep period to protect your rhythm as much as the schedule allows.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="border-t border-indigo-300/15">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <svg width="24" height="24" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M32.5 29.5A15 15 0 1 1 18.5 6.6 12.2 12.2 0 0 0 32.5 29.5Z" fill="#FCD34D"/></svg>
+      <span class="font-extrabold"><span class="periwinkle">REM</span><span class="amber-glow">Nest</span></span>
+      <span class="text-xs text-slate-500 ml-2">Sleep better, wake brighter.</span>
+    </div>
+    <nav class="flex items-center gap-6 text-sm font-semibold text-slate-300">
+      <a href="#top" class="hover:text-amber-300 transition">Home</a>
+      <a href="https://fixoraa.tech" class="hover:text-amber-300 transition">More Tools</a>
+    </nav>
+  </div>
+</footer>
+<!-- ============ JSON-LD FAQ ============ -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How long is one sleep cycle?",
+      "acceptedAnswer": { "@type": "Answer", "text": "For planning purposes, 90 minutes is the standard average: each cycle moves through light sleep, deep sleep, and REM sleep. In reality, cycles range from about 80 to 110 minutes depending on age, genetics, and sleep pressure, and they shorten slightly toward morning." }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does the calculator add time to fall asleep?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The time between lights-out and actual sleep — sleep latency — averages about 15 minutes for healthy adults, but varies enormously between people. If the calculator ignored it, every suggested bedtime would be too late by your personal latency, and you would complete fewer cycles than planned." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is 6 hours of sleep enough if it is complete cycles?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Four complete cycles (6 hours at 90 minutes each) will feel much better than 7 hours that ends mid-cycle, because you avoid waking from deep sleep. But most adults need 7–9 hours, i.e. five to six cycles; consistently sleeping 6 hours builds sleep debt." }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the best nap length?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Either 20 minutes or one full sleep cycle (roughly 90–110 minutes including your fall-asleep time) — nothing in between. A 20-minute power nap keeps you in light sleep; a 30–60 minute nap drops you into deep sleep without completing the cycle, causing grogginess." }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do I feel groggy even after 8 hours of sleep?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Usually because your alarm fired during deep slow-wave sleep — the middle of a cycle. Eight hours is five full 90-minute cycles plus 30 minutes, which lands you inside the sixth cycle's deep phase. Try 7.5 or 9 hours instead, or time your bedtime so the alarm lands at a cycle boundary." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use this for shift work or daytime sleep?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes — the math works identically for any 24-hour time, since all calculations wrap past midnight. Enter your daytime wake time and the calculator counts back through complete cycles to a nighttime bedtime, or vice versa." }
+    }
+  ]
+}
+</script>
+
+<script>
+/* __PURE_START__ */
+function parseTime(str) {
+  if (typeof str !== 'string') return null;
+  var m = str.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  var h = parseInt(m[1], 10), mm = parseInt(m[2], 10);
+  if (h < 0 || h > 23 || mm < 0 || mm > 59) return null;
+  return h * 60 + mm;
+}
+function fmtTime(mins) {
+  if (!isFinite(mins)) return '--:--';
+  mins = ((Math.round(mins) % 1440) + 1440) % 1440;
+  var h = Math.floor(mins / 60), mm = mins % 60;
+  var ap = h < 12 ? 'AM' : 'PM';
+  var h12 = h % 12; if (h12 === 0) h12 = 12;
+  return h12 + ':' + (mm < 10 ? '0' : '') + mm + ' ' + ap;
+}
+function fmtDur(mins) {
+  mins = Math.round(mins);
+  if (!isFinite(mins) || mins < 0) return '--';
+  var h = Math.floor(mins / 60), mm = mins % 60;
+  if (h === 0) return mm + ' min';
+  if (mm === 0) return h + 'h';
+  return h + 'h ' + mm + 'm';
+}
+function clampCycle(n) {
+  n = parseFloat(n);
+  if (!isFinite(n)) return 90;
+  return Math.min(100, Math.max(80, Math.round(n)));
+}
+function clampLatency(n) {
+  n = parseFloat(n);
+  if (!isFinite(n)) return 15;
+  return Math.min(60, Math.max(0, Math.round(n)));
+}
+function bedtimesFor(wakeMin, cycleLen, latency) {
+  if (!isFinite(wakeMin) || wakeMin < 0 || wakeMin >= 1440) return [];
+  cycleLen = clampCycle(cycleLen); latency = clampLatency(latency);
+  var out = [];
+  for (var c = 3; c <= 6; c++) {
+    var total = c * cycleLen + latency;
+    var bed = ((wakeMin - total) % 1440 + 1440) % 1440;
+    out.push({ cycles: c, timeMin: bed, sleepMin: c * cycleLen, totalMin: total });
+  }
+  return out;
+}
+function wakeTimesFor(bedMin, cycleLen, latency) {
+  if (!isFinite(bedMin) || bedMin < 0 || bedMin >= 1440) return [];
+  cycleLen = clampCycle(cycleLen); latency = clampLatency(latency);
+  var out = [];
+  for (var c = 3; c <= 6; c++) {
+    var total = c * cycleLen + latency;
+    var wake = (bedMin + total) % 1440;
+    out.push({ cycles: c, timeMin: wake, sleepMin: c * cycleLen, totalMin: total });
+  }
+  return out;
+}
+function minutesUntil(fromMin, toMin) {
+  if (!isFinite(fromMin) || !isFinite(toMin)) return null;
+  return ((toMin - fromMin) % 1440 + 1440) % 1440;
+}
+function powerNapWake(nowMin) {
+  if (!isFinite(nowMin)) return null;
+  return (nowMin + 20) % 1440;
+}
+function fullCycleNapWake(nowMin, cycleLen, latency) {
+  if (!isFinite(nowMin)) return null;
+  return (nowMin + clampCycle(cycleLen) + clampLatency(latency)) % 1440;
+}
+var AGE_GROUPS = [
+  { min: 0,    max: 0.25, label: 'Newborns (0–3 months)',      hours: '14–17 hours' },
+  { min: 0.25, max: 1,    label: 'Infants (4–12 months)',      hours: '12–16 hours' },
+  { min: 1,    max: 3,    label: 'Toddlers (1–2 years)',       hours: '11–14 hours' },
+  { min: 3,    max: 6,    label: 'Preschoolers (3–5 years)',   hours: '10–13 hours' },
+  { min: 6,    max: 13,   label: 'School-age children (6–12)', hours: '9–12 hours' },
+  { min: 13,   max: 18,   label: 'Teenagers (13–17 years)',    hours: '8–10 hours' },
+  { min: 18,   max: 65,   label: 'Adults (18–64 years)',       hours: '7–9 hours' },
+  { min: 65,   max: 121,  label: 'Older adults (65+ years)',   hours: '7–8 hours' }
+];
+function ageGroupFor(age) {
+  age = parseFloat(age);
+  if (!isFinite(age) || age < 0 || age > 120) return null;
+  for (var i = 0; i < AGE_GROUPS.length; i++) {
+    var g = AGE_GROUPS[i];
+    if (age >= g.min && age < g.max) return g;
+  }
+  return null;
+}
+function cyclesForHours(hoursMin, hoursMax, cycleLen) {
+  cycleLen = clampCycle(cycleLen);
+  var lo = Math.ceil((hoursMin * 60) / cycleLen);
+  var hi = Math.floor((hoursMax * 60) / cycleLen);
+  return { minCycles: lo, maxCycles: hi };
+}
+/* __PURE_END__ */
+
+/* ---------- UI wiring (not part of pure tests) ---------- */
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { mode: 'wake', selectedCycles: 5, results: [] };
+
+  // starfield
+  try {
+    var sf = $('starfield');
+    for (var s = 0; s < 70; s++) {
+      var st = document.createElement('span');
+      st.className = 'star';
+      var sz = Math.random() < 0.85 ? 2 : 3;
+      st.style.width = sz + 'px'; st.style.height = sz + 'px';
+      st.style.left = (Math.random() * 100) + '%';
+      st.style.top = (Math.random() * 100) + '%';
+      st.style.animationDelay = (Math.random() * 3).toFixed(2) + 's';
+      st.style.animationDuration = (2 + Math.random() * 3).toFixed(2) + 's';
+      sf.appendChild(st);
+    }
+  } catch (e) {}
+
+  // settings persistence
+  var store = { get: function () { return {}; }, set: function () {} };
+  try {
+    if (window.localStorage) {
+      store = {
+        get: function () { try { return JSON.parse(localStorage.getItem('remnest-settings-v1')) || {}; } catch (e) { return {}; } },
+        set: function (v) { try { localStorage.setItem('remnest-settings-v1', JSON.stringify(v)); } catch (e) {} }
+      };
+    }
+  } catch (e) {}
+  var saved = store.get();
+  if (saved.cycleLen) $('cycleLen').value = clampCycle(saved.cycleLen);
+  if (saved.latency !== undefined && saved.latency !== null && saved.latency !== '') $('latency').value = clampLatency(saved.latency);
+  if (saved.mode === 'bed') setMode('bed');
+  if (saved.time) $('timeInput').value = saved.time;
+
+  function syncSliderLabels() {
+    $('cycleLenVal').textContent = clampCycle($('cycleLen').value);
+    $('latencyVal').textContent = clampLatency($('latency').value);
+    $('fullNapDesc').textContent = '1 cycle · ' + clampCycle($('cycleLen').value) + ' min + ' + clampLatency($('latency').value) + ' min to drift off';
+  }
+
+  function setMode(mode) {
+    state.mode = mode;
+    var wake = mode === 'wake';
+    $('tabWake').className = (wake ? 'tab-active' : 'tab-idle') + ' rounded-2xl px-4 py-3.5 font-bold text-sm sm:text-base transition';
+    $('tabBed').className = (!wake ? 'tab-active' : 'tab-idle') + ' rounded-2xl px-4 py-3.5 font-bold text-sm sm:text-base transition';
+    $('tabWake').setAttribute('aria-selected', wake ? 'true' : 'false');
+    $('tabBed').setAttribute('aria-selected', !wake ? 'true' : 'false');
+    $('timeLabel').textContent = wake ? 'Wake-up time' : 'Bedtime (lights-out)';
+    $('resultsTitle').textContent = wake ? 'Suggested bedtimes' : 'Suggested wake-up times';
+    recalc();
+  }
+
+  function timelineBar(r, cycleLen, latency) {
+    var total = r.totalMin;
+    var latPct = (latency / total * 100).toFixed(1);
+    var segPct = (cycleLen / total * 100).toFixed(1);
+    var shades = ['#A5B4FC', '#7C86E8', '#A5B4FC', '#7C86E8', '#A5B4FC', '#7C86E8'];
+    var html = '<div class="flex h-3.5 rounded-full overflow-hidden bg-[#171233] border border-indigo-300/20" role="img" aria-label="' + r.cycles + ' sleep cycles timeline">';
+    html += '<div class="cycle-seg" style="width:' + latPct + '%;background:#FCD34D" title="Fall asleep: ' + latency + ' min"></div>';
+    for (var i = 0; i < r.cycles; i++) {
+      html += '<div class="cycle-seg" style="width:' + segPct + '%;background:' + shades[i % shades.length] + '" title="Cycle ' + (i + 1) + ': ' + cycleLen + ' min"></div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function recalc() {
+    syncSliderLabels();
+    var cycleLen = clampCycle($('cycleLen').value);
+    var latency = clampLatency($('latency').value);
+    var raw = $('timeInput').value;
+    var t = parseTime(raw);
+    var err = $('timeError'), empty = $('resultsEmpty'), box = $('results');
+    err.classList.add('hidden'); box.innerHTML = '';
+    $('countdownWrap').classList.add('hidden');
+
+    if (!raw) { empty.classList.remove('hidden'); empty.textContent = 'Enter a time above to see your cycle-aligned plan.'; state.results = []; return; }
+    if (t === null) {
+      err.textContent = 'That time does not look right — please pick a valid time (e.g. 06:30 or 22:45).';
+      err.classList.remove('hidden'); empty.classList.add('hidden'); state.results = [];
+      return;
+    }
+    empty.classList.add('hidden');
+    store.set({ mode: state.mode, time: raw, cycleLen: cycleLen, latency: latency });
+
+    var results = state.mode === 'wake' ? bedtimesFor(t, cycleLen, latency) : wakeTimesFor(t, cycleLen, latency);
+    state.results = results;
+
+    results.forEach(function (r, idx) {
+      var best = r.cycles === 5;
+      var selected = r.cycles === state.selectedCycles;
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'result-in night-card night-card-hover rounded-2xl p-4 text-left cursor-pointer ' + (selected ? 'ring-2 ring-amber-300/80' : '');
+      card.style.animationDelay = (idx * 60) + 'ms';
+      card.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      var kind = state.mode === 'wake' ? 'Bedtime' : 'Wake up';
+      card.innerHTML =
+        '<div class="flex items-center justify-between">' +
+          '<span class="text-xs font-extrabold uppercase tracking-wider periwinkle">' + r.cycles + ' cycles</span>' +
+          (best ? '<span class="text-[10px] font-extrabold uppercase tracking-wider bg-amber-300 text-[#171233] rounded-full px-2 py-0.5">Best</span>' : '') +
+        '</div>' +
+        '<p class="text-3xl font-extrabold text-white mt-2">' + fmtTime(r.timeMin) + '</p>' +
+        '<p class="text-xs text-slate-400 mt-1">' + kind + ' · ' + fmtDur(r.sleepMin) + ' asleep</p>' +
+        '<div class="mt-3">' + timelineBar(r, cycleLen, latency) + '</div>' +
+        '<p class="mt-2 text-[11px] text-slate-500">🟡 fall asleep ' + latency + 'm · 🟣 ' + r.cycles + ' × ' + cycleLen + 'm cycles</p>';
+      card.addEventListener('click', function () {
+        state.selectedCycles = r.cycles;
+        recalc();
+      });
+      box.appendChild(card);
+    });
+    updateCountdown(cycleLen, latency);
+  }
+
+  function updateCountdown() {
+    var sel = null;
+    for (var i = 0; i < state.results.length; i++) {
+      if (state.results[i].cycles === state.selectedCycles) sel = state.results[i];
+    }
+    if (!sel) return;
+    var now = new Date();
+    var nowMin = now.getHours() * 60 + now.getMinutes();
+    var mins = minutesUntil(nowMin, sel.timeMin);
+    if (mins === null) return;
+    var h = Math.floor(mins / 60), mm = mins % 60;
+    var when = mins <= 720 ? 'tonight' : 'tomorrow';
+    if (state.mode === 'wake') {
+      $('countdownLabel').textContent = '🌙 Bedtime in (' + when + ')';
+      $('countdownText').textContent = fmtDur(mins) + ' → lights out ' + fmtTime(sel.timeMin);
+    } else {
+      $('countdownLabel').textContent = '⏰ Wake-up in (' + when + ')';
+      $('countdownText').textContent = fmtDur(mins) + ' → alarm ' + fmtTime(sel.timeMin);
+    }
+    $('countdownWrap').classList.remove('hidden');
+  }
+
+  $('tabWake').addEventListener('click', function () { setMode('wake'); });
+  $('tabBed').addEventListener('click', function () { setMode('bed'); });
+  $('timeInput').addEventListener('input', recalc);
+  $('timeInput').addEventListener('change', recalc);
+  $('cycleLen').addEventListener('input', recalc);
+  $('latency').addEventListener('input', recalc);
+  $('btnNow').addEventListener('click', function () {
+    var n = new Date();
+    var hh = ('0' + n.getHours()).slice(-2), mm = ('0' + n.getMinutes()).slice(-2);
+    $('timeInput').value = hh + ':' + mm;
+    recalc();
+  });
+  $('btnClear').addEventListener('click', function () { $('timeInput').value = ''; recalc(); });
+
+  // ---- Nap planner ----
+  $('btnPowerNap').addEventListener('click', function () {
+    var now = new Date();
+    var wake = powerNapWake(now.getHours() * 60 + now.getMinutes());
+    $('napKind').textContent = '⚡ Power nap · 20 min';
+    $('napTime').textContent = fmtTime(wake);
+    $('napNote').textContent = 'Set your alarm now. Short enough to stay in light sleep — you will wake up fast.';
+    $('napResult').classList.remove('hidden');
+  });
+  $('btnFullNap').addEventListener('click', function () {
+    var now = new Date();
+    var cycleLen = clampCycle($('cycleLen').value), latency = clampLatency($('latency').value);
+    var wake = fullCycleNapWake(now.getHours() * 60 + now.getMinutes(), cycleLen, latency);
+    $('napKind').textContent = '🌙 Full-cycle nap · ' + fmtDur(latency + cycleLen);
+    $('napTime').textContent = fmtTime(wake);
+    $('napNote').textContent = 'One complete cycle (' + latency + ' min to drift off + ' + cycleLen + ' min asleep). Wake at a natural boundary, not from deep sleep.';
+    $('napResult').classList.remove('hidden');
+  });
+
+  // ---- Age table ----
+  var ageBody = $('ageBody');
+  AGE_GROUPS.forEach(function (g) {
+    var tr = document.createElement('tr');
+    tr.dataset.min = g.min; tr.dataset.max = g.max;
+    tr.innerHTML = '<td class="px-4 py-2.5 font-semibold text-slate-200">' + g.label + '</td>' +
+                   '<td class="px-4 py-2.5 text-right amber-glow font-bold">' + g.hours + '</td>';
+    ageBody.appendChild(tr);
+  });
+  $('ageInput').addEventListener('input', function () {
+    var g = ageGroupFor($('ageInput').value);
+    var rows = ageBody.querySelectorAll('tr');
+    rows.forEach(function (tr) { tr.classList.remove('bg-amber-300/10'); });
+    var note = $('ageNote');
+    if (!g) { note.classList.add('hidden'); return; }
+    rows.forEach(function (tr) {
+      if (parseFloat(tr.dataset.min) === g.min) tr.classList.add('bg-amber-300/10');
+    });
+    var c = cyclesForHours(parseFloat(g.hours.split('–')[0]), parseFloat(g.hours.split('–')[1].replace(' hours','').replace('hour','')), clampCycle($('cycleLen').value));
+    note.textContent = '✓ ' + g.label + ' → aim for ' + c.minCycles + '–' + c.maxCycles + ' cycles (' + g.hours + ' of sleep).';
+    note.classList.remove('hidden');
+  });
+
+  syncSliderLabels();
+  recalc();
+})();
+</script>
+</body>
+</html>
